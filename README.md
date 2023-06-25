@@ -73,12 +73,6 @@ void listen(const std::function<void(const Event&)>& listener)
 ```
 * listener - A callable object that will be called when an event of type `Event` is dispatched. The object must be copyable.
 
-##### Example
-```cpp
-Dispatcher dispatcher;
-dispatcher.listen<int>([](const int& n){ /* ... */ });
-```
-
 ### Dispatching Events
 
 Immediately dispatch an event to all the listeners that are registered for the event type.
@@ -89,12 +83,6 @@ void send(const Event& event)
 ```
 * event - The event to dispatch.
 
-##### Example
-```cpp
-Dispatcher dispatcher;
-dispatcher.send(2137);
-```
-
 ### Queueing Events
 
 Add an event to the queue. The event will be dispatched once `process()` is called.
@@ -104,12 +92,6 @@ template<typename Event>
 void queue(const Event& event)
 ```
 * event - The event to queue. The event will be copied and stored in the queue.
-
-##### Example
-```cpp
-Dispatcher dispatcher;
-dispatcher.queue(2137);
-```
 
 ### Processing the Queue
 
