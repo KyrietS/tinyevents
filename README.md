@@ -1,5 +1,9 @@
 # TinyEvents - A Simple Event-Dispatcher System for C++
 
+[![Mizeria release](https://img.shields.io/github/v/release/KyrietS/tinyevents?include_prereleases&sort=semver)](https://github.com/KyrietS/tinyevents/releases)
+[![Lincense](https://img.shields.io/github/license/KyrietS/tinyevents)](LICENSE)
+[![Tests](https://github.com/KyrietS/tinyevents/actions/workflows/tests.yml/badge.svg)](https://github.com/KyrietS/tinyevents/actions/workflows/tests.yml)
+
 *TinyEvents* is a simple header-only library for C++ that provides a basic, yet powerfull, event-dispatcher system. It is designed to be easy to use and to have minimal dependencies. It is written in C++17 and has no dependencies other than the standard library.
 
 In *TinyEvents* any type can be used as an event. The events are dispatched to listeners that are registered for a specific event type. Asynchronous (deferred) dispatching using a queue is also supported.
