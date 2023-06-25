@@ -25,10 +25,10 @@ int maint() {
     });
 
     dispatcher.queue(MyEvent{77});
-    dispatcher.dispatch(MyEvent{42});  // Prints "Received MyEvent: 42"
-    dispatcher.process();              // Prints "Received MyEvent: 77"
+    dispatcher.send(MyEvent{42});  // Prints "Received MyEvent: 42"
+    dispatcher.process();          // Prints "Received MyEvent: 77"
 
-    dispatcher.dispatch(123);          // No listener for this event, so nothing happens
+    dispatcher.send(123);          // No listener for this event, so nothing happens
 
     return 0;
 }
