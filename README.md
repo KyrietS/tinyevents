@@ -67,8 +67,6 @@ Register a listener for a specific event type. The listener will be called when 
 template<typename Event>
 void listen(const std::function<void(const Event&)>& listener)
 ```
-
-##### Parameters
 * listener - A callable object that will be called when an event of type `Event` is dispatched. The object must be copyable.
 
 ##### Example
@@ -85,7 +83,6 @@ Immediately dispatch an event to all the listeners that are registered for the e
 template<typename Event>
 void send(const Event& event)
 ```
-##### Parameters
 * event - The event to dispatch.
 
 ##### Example
@@ -102,7 +99,6 @@ Add an event to the queue. The event will be dispatched once `process()` is call
 template<typename Event>
 void queue(const Event& event)
 ```
-##### Parameters
 * event - The event to queue. The event will be copied and stored in the queue.
 
 ##### Example
