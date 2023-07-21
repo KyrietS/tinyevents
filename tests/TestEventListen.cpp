@@ -63,7 +63,7 @@ TEST_F(TestEventListen, RemovedListenerShouldNotBeCalled) {
     dispatcher.remove(handle);
 
     EXPECT_CALL(callback, Call(_)).Times(0);
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
 }
 
 TEST_F(TestEventListen, ListenersCanAddAnotherListener) {
@@ -77,15 +77,15 @@ TEST_F(TestEventListen, ListenersCanAddAnotherListener) {
 
     EXPECT_CALL(callback1, Call(111)).Times(1);
     EXPECT_CALL(callback2, Call(111)).Times(0); // Listener added but not called (yet)
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
 
     EXPECT_CALL(callback1, Call(222)).Times(1);
     EXPECT_CALL(callback2, Call(222)).Times(1); // Listener added and called
-    dispatcher.send(222);
+    dispatcher.dispatch(222);
 
     EXPECT_CALL(callback1, Call(333)).Times(1);
     EXPECT_CALL(callback2, Call(333)).Times(2); // Listener added and called twice
-    dispatcher.send(333);
+    dispatcher.dispatch(333);
 }
 
 TEST_F(TestEventListen, ListenerCanRemoveItself) {
@@ -99,10 +99,10 @@ TEST_F(TestEventListen, ListenerCanRemoveItself) {
     });
 
     EXPECT_CALL(callback, Call(_)).Times(1);
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
 
     EXPECT_CALL(callback, Call(_)).Times(0);
-    dispatcher.send(222);
+    dispatcher.dispatch(222);
 }
 
 TEST_F(TestEventListen, ListenerCanRemoveAnotherListener) {
@@ -119,7 +119,7 @@ TEST_F(TestEventListen, ListenerCanRemoveAnotherListener) {
 
     EXPECT_CALL(callback1, Call(_)).Times(1);
     EXPECT_CALL(callback2, Call(_)).Times(0);
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
 }
 
 TEST_F(TestEventListen, ListenerOnceShouldBeRemovedAfterCall) {
@@ -129,9 +129,9 @@ TEST_F(TestEventListen, ListenerOnceShouldBeRemovedAfterCall) {
 
     EXPECT_CALL(callback, Call(_)).Times(1);
 
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
     EXPECT_FALSE(dispatcher.hasListener(handle));
-    dispatcher.send(222);
+    dispatcher.dispatch(222);
 }
 
 TEST_F(TestEventListen, ListenOnceCanBeCalledFromInsideAnotherListenOnceCallback) {
@@ -147,12 +147,12 @@ TEST_F(TestEventListen, ListenOnceCanBeCalledFromInsideAnotherListenOnceCallback
 
     EXPECT_CALL(callback1, Call(111)).Times(1);
     EXPECT_CALL(callback2, Call(111)).Times(0);
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
 
     EXPECT_CALL(callback1, Call(222)).Times(0);
     EXPECT_CALL(callback2, Call(222)).Times(1);
-    dispatcher.send(222);
-    dispatcher.send(333);
+    dispatcher.dispatch(222);
+    dispatcher.dispatch(333);
 }
 
 TEST_F(TestEventListen, ListenerOnceShouldBeRemovedAfterCallEvenIfItRemovesItself) {
@@ -167,9 +167,9 @@ TEST_F(TestEventListen, ListenerOnceShouldBeRemovedAfterCallEvenIfItRemovesItsel
     });
 
     EXPECT_CALL(callback, Call(_)).Times(1);
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
     EXPECT_FALSE(dispatcher.hasListener(handleToSelf));
-    dispatcher.send(222);
+    dispatcher.dispatch(222);
 }
 
 TEST_F(TestEventListen, ListenerOnceShouldBeCalledOnceEvenIfMessageIsSentFromListener) {
@@ -177,11 +177,11 @@ TEST_F(TestEventListen, ListenerOnceShouldBeCalledOnceEvenIfMessageIsSentFromLis
 
     auto handle = dispatcher.listenOnce<int>([&](const int &value) {
         callback.Call(value);
-        dispatcher.send(222);
+        dispatcher.dispatch(222);
     });
 
     EXPECT_CALL(callback, Call(111)).Times(1);
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
     EXPECT_FALSE(dispatcher.hasListener(handle));
-    dispatcher.send(333);
+    dispatcher.dispatch(333);
 }

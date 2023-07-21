@@ -25,10 +25,10 @@ TEST(TestDispatcherMove, WhenDispatcherIsMovedThenListenersAreMoved) {
 
     // Should not call the listener
     EXPECT_CALL(intCallback, Call(222)).Times(0);
-    movedDispatcher.send(222); // NOLINT(*-use-after-move)
+    movedDispatcher.dispatch(222); // NOLINT(*-use-after-move)
 
     EXPECT_CALL(intCallback, Call(111)).Times(1);
-    dispatcher.send(111);
+    dispatcher.dispatch(111);
 }
 
 TEST(TestDispatcherMove, WhenDispatcherIsMovedThenQueuedMessagesAreMoved) {

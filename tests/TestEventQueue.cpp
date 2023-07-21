@@ -20,14 +20,14 @@ TEST_F(TestEventQueue, MessagesQueuedAndThenIgnoredWhenNoListeners) {
     dispatcher.process();
 }
 
-TEST_F(TestEventQueue, ShouldNotSendAnythingWhenNoMessagesQueued) {
+TEST_F(TestEventQueue, ShouldNotDispatchAnythingWhenNoMessagesQueued) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
     dispatcher.listen(intCallback.AsStdFunction());
     dispatcher.process();
 }
 
-TEST_F(TestEventQueue, ShouldSendMessageQueued) {
+TEST_F(TestEventQueue, ShouldDispatchMessageQueued) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
     dispatcher.listen(intCallback.AsStdFunction());
@@ -39,7 +39,7 @@ TEST_F(TestEventQueue, ShouldSendMessageQueued) {
     dispatcher.process();
 }
 
-TEST_F(TestEventQueue, ShouldSendQueuedMessagesOfDifferentTypes) {
+TEST_F(TestEventQueue, ShouldDispatchQueuedMessagesOfDifferentTypes) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
     dispatcher.listen(intCallback.AsStdFunction());

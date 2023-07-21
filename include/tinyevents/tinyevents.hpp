@@ -62,7 +62,7 @@ namespace tinyevents
         }
 
         template<typename T>
-        void send(const T &msg) {
+        void dispatch(const T &msg) {
             const auto &listenersIter = listenersByType.find(std::type_index(typeid(T)));
             if (listenersIter == listenersByType.end()) {
                 return; // No listeners for this type of message
@@ -90,7 +90,7 @@ namespace tinyevents
         template<typename T>
         void queue(const T &msg) {
             queuedDispatches.push_back([msg](Dispatcher& dispatcher) {
-                dispatcher.send(msg);
+                dispatcher.dispatch(msg);
             });
         }
 

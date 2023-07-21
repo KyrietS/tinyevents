@@ -25,10 +25,10 @@ int maint() {
     });
 
     dispatcher.queue(MyEvent{77});
-    dispatcher.send(MyEvent{42});  // Prints "Received MyEvent: 42"
+    dispatcher.dispatch(MyEvent{42});  // Prints "Received MyEvent: 42"
     dispatcher.process();          // Prints "Received MyEvent: 77"
 
-    dispatcher.send(123);          // No listener for this event, so nothing happens
+    dispatcher.dispatch(123);          // No listener for this event, so nothing happens
 
     return 0;
 }
@@ -111,7 +111,7 @@ Immediately dispatch an event to all the listeners that are registered for the e
 
 ```cpp
 template<typename Event>
-void send(const Event& event)
+void dispatch(const Event& event)
 ```
 * event - The event to dispatch.
 
@@ -137,7 +137,7 @@ void process()
 
 * You can safely call `listen()` and `listenOnce()` from inside a listener callback. The new listener will not be called during the current dispatching process.
 * You can safely call `remove()` from inside a listener callback. The listener will be removed immediately and will not be called during the current dispatching process. But keep in mind that the dispatching order is not guaranteed, so the listener may be called before it is removed.
-* You can safely call `send()` and `process()` from inside a listener callback. The new event will be dispatched immediately during the current dispatching process.
+* You can safely call `dispatch()` and `process()` from inside a listener callback. The new event will be dispatched immediately during the current dispatching process.
 * You can safely call `remove(handle)` for a handle that was already removed. Nothing will happen.
 * Handles are never reused by the same dispatcher.
 
