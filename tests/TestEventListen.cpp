@@ -65,3 +65,123 @@ TEST_F(TestEventListen, RemovedListenerShouldNotBeCalled) {
     EXPECT_CALL(callback, Call(_)).Times(0);
     dispatcher.send(111);
 }
+
+TEST_F(TestEventListen, ListenersCanAddAnotherListener) {
+    StrictMock<MockFunction<void(const int &)>> callback1;
+    StrictMock<MockFunction<void(const int &)>> callback2;
+
+    dispatcher.listen<int>([&](const int &value) {
+        callback1.Call(value);
+        dispatcher.listen(callback2.AsStdFunction());
+    });
+
+    EXPECT_CALL(callback1, Call(111)).Times(1);
+    EXPECT_CALL(callback2, Call(111)).Times(0); // Listener added but not called (yet)
+    dispatcher.send(111);
+
+    EXPECT_CALL(callback1, Call(222)).Times(1);
+    EXPECT_CALL(callback2, Call(222)).Times(1); // Listener added and called
+    dispatcher.send(222);
+
+    EXPECT_CALL(callback1, Call(333)).Times(1);
+    EXPECT_CALL(callback2, Call(333)).Times(2); // Listener added and called twice
+    dispatcher.send(333);
+}
+
+TEST_F(TestEventListen, ListenerCanRemoveItself) {
+    StrictMock<MockFunction<void(const int &)>> callback;
+
+    ListenerHandle handleToSelf{0};
+
+    handleToSelf = dispatcher.listen<int>([&](const int &value) {
+        callback.Call(value);
+        dispatcher.remove(handleToSelf);
+    });
+
+    EXPECT_CALL(callback, Call(_)).Times(1);
+    dispatcher.send(111);
+
+    EXPECT_CALL(callback, Call(_)).Times(0);
+    dispatcher.send(222);
+}
+
+TEST_F(TestEventListen, ListenerCanRemoveAnotherListener) {
+    StrictMock<MockFunction<void(const int &)>> callback1;
+    StrictMock<MockFunction<void(const int &)>> callback2;
+
+    ListenerHandle handle2{0};
+
+    dispatcher.listen<int>([&](const int &value) {
+        callback1.Call(value);
+        dispatcher.remove(handle2);
+    });
+    handle2 = dispatcher.listen<int>(callback2.AsStdFunction());
+
+    EXPECT_CALL(callback1, Call(_)).Times(1);
+    EXPECT_CALL(callback2, Call(_)).Times(0);
+    dispatcher.send(111);
+}
+
+TEST_F(TestEventListen, ListenerOnceShouldBeRemovedAfterCall) {
+    StrictMock<MockFunction<void(const int &)>> callback;
+
+    auto handle = dispatcher.listenOnce(callback.AsStdFunction());
+
+    EXPECT_CALL(callback, Call(_)).Times(1);
+
+    dispatcher.send(111);
+    EXPECT_FALSE(dispatcher.hasListener(handle));
+    dispatcher.send(222);
+}
+
+TEST_F(TestEventListen, ListenOnceCanBeCalledFromInsideAnotherListenOnceCallback) {
+    StrictMock<MockFunction<void(const int &)>> callback1;
+    StrictMock<MockFunction<void(const int &)>> callback2;
+
+    dispatcher.listenOnce<int>([&](const int &value) {
+        callback1.Call(value);
+        dispatcher.listenOnce<int>([&](const int &value) {
+            callback2.Call(value);
+        });
+    });
+
+    EXPECT_CALL(callback1, Call(111)).Times(1);
+    EXPECT_CALL(callback2, Call(111)).Times(0);
+    dispatcher.send(111);
+
+    EXPECT_CALL(callback1, Call(222)).Times(0);
+    EXPECT_CALL(callback2, Call(222)).Times(1);
+    dispatcher.send(222);
+    dispatcher.send(333);
+}
+
+TEST_F(TestEventListen, ListenerOnceShouldBeRemovedAfterCallEvenIfItRemovesItself) {
+    StrictMock<MockFunction<void(const int &)>> callback;
+
+    ListenerHandle handleToSelf{0};
+
+    handleToSelf = dispatcher.listenOnce<int>([&](const int &value) {
+        callback.Call(value);
+        dispatcher.remove(handleToSelf);
+        EXPECT_FALSE(dispatcher.hasListener(handleToSelf));
+    });
+
+    EXPECT_CALL(callback, Call(_)).Times(1);
+    dispatcher.send(111);
+    EXPECT_FALSE(dispatcher.hasListener(handleToSelf));
+    dispatcher.send(222);
+}
+
+TEST_F(TestEventListen, ListenerOnceShouldBeCalledOnceEvenIfMessageIsSentFromListener) {
+    StrictMock<MockFunction<void(const int &)>> callback;
+
+    auto handle = dispatcher.listenOnce<int>([&](const int &value) {
+        callback.Call(value);
+        dispatcher.send(222);
+    });
+
+    EXPECT_CALL(callback, Call(111)).Times(1);
+    dispatcher.send(111);
+    EXPECT_FALSE(dispatcher.hasListener(handle));
+    dispatcher.send(333);
+}

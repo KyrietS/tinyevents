@@ -75,6 +75,18 @@ ListenerHandle listen(const std::function<void(const Event&)>& listener)
 
 Returns a handle that can be used to remove the listener.
 
+### Listening to Events Once
+
+Same as `listen()`, but the listener will be removed after it is called once.
+
+```cpp
+template<typename Event>
+ListenerHandle listenOnce(const std::function<void(const Event&)>& listener)
+```
+* listener - A callable object that will be called when an event of type `Event` is dispatched. The object must be copyable.
+
+Returns a handle that can be used to remove the listener.
+
 ### Removing Listeners
 
 Remove a listener that was previously registered using `listen()`.
@@ -120,6 +132,14 @@ Processing the queue will dispatch all the events that were queued using `queue(
 ```cpp
 void process()
 ```
+
+## Some notes about callback safety
+
+* You can safely call `listen()` and `listenOnce()` from inside a listener callback. The new listener will not be called during the current dispatching process.
+* You can safely call `remove()` from inside a listener callback. The listener will be removed immediately and will not be called during the current dispatching process. But keep in mind that the dispatching order is not guaranteed, so the listener may be called before it is removed.
+* You can safely call `send()` and `process()` from inside a listener callback. The new event will be dispatched immediately during the current dispatching process.
+* You can safely call `remove(handle)` for a handle that was already removed. Nothing will happen.
+* Handles are never reused by the same dispatcher.
 
 ## Tests
 

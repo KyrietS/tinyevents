@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <list>
+#include <set>
 #include <map>
 #include <typeindex>
 #include <utility>
@@ -49,10 +50,38 @@ namespace tinyevents
         }
 
         template<typename T>
+        ListenerHandle listenOnce(const std::function<void(const T &)> &listener) {
+            const auto listenerId = nextListenerId;
+            return listen<T>([this, listenerId, listener](const T &msg) {
+                ListenerHandle handle{listenerId};
+                listenersScheduledForRemoval.emplace(handle); // Fix for nested listenOnce
+                listener(msg);
+                listenersScheduledForRemoval.erase(handle);
+                this->remove(handle);
+            });
+        }
+
+        template<typename T>
         void send(const T &msg) {
-            const auto &listeners = listenersByType.find(std::type_index(typeid(T)));
-            if (listeners != listenersByType.end()) {
-                for (auto &[handle, listener]: listeners->second) {
+            const auto &listenersIter = listenersByType.find(std::type_index(typeid(T)));
+            if (listenersIter == listenersByType.end()) {
+                return; // No listeners for this type of message
+            }
+
+            const auto& [msgType, listeners] = *listenersIter;
+
+            // Cache handles to avoid iterator invalidation. This way listeners can safely remove themselves.
+            std::vector<ListenerHandle> handles;
+            handles.reserve(listeners.size());
+            for (auto &[handle, listener]: listeners) {
+                handles.push_back(handle);
+            }
+
+            for(auto& handle: handles) {
+                const auto& handleAndListener = listeners.find(handle);
+                const bool isListenerPresent = handleAndListener != listeners.end();
+                if (isListenerPresent && !isScheduledForRemoval(handle)) {
+                    const auto& listener = handleAndListener->second;
                     listener(&msg);
                 }
             }
@@ -73,20 +102,33 @@ namespace tinyevents
         }
 
         void remove(const ListenerHandle &handle) {
+            if (isScheduledForRemoval(handle)) {
+                return;
+            }
+
             for (auto &listeners: listenersByType) {
                 listeners.second.erase(handle);
             }
         }
 
         [[nodiscard]] bool hasListener(const ListenerHandle& handle) const {
+            if (isScheduledForRemoval(handle)) {
+                return false;
+            }
+
             return std::any_of(listenersByType.begin(), listenersByType.end(), [&handle](const auto& listeners) {
                 return listeners.second.find(handle) != listeners.second.end();
             });
         }
 
     private:
+        bool isScheduledForRemoval(const ListenerHandle& handle) const {
+            return listenersScheduledForRemoval.find(handle) != listenersScheduledForRemoval.end();
+        }
+
         std::map<std::type_index, Listeners> listenersByType;
         std::list<std::function<void(Dispatcher&)>> queuedDispatches;
+        std::set<ListenerHandle> listenersScheduledForRemoval;
 
         std::uint64_t nextListenerId = 0;
     };

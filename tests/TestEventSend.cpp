@@ -41,6 +41,21 @@ TEST_F(TestEventSend, TheSameListenerCanBeAddedMultipleTimes) {
     dispatcher.send(123);
 }
 
+TEST_F(TestEventSend, ListenerCanSendEventToItself)
+{
+    StrictMock<MockFunction<void(const int &)>> callback;
+
+    dispatcher.listen<int>([&](const int &value) {
+        callback.Call(value);
+        if (value == 111)
+            dispatcher.send(999);
+    });
+
+    EXPECT_CALL(callback, Call(111)).Times(1);
+    EXPECT_CALL(callback, Call(999)).Times(1);
+    dispatcher.send(111);
+}
+
 TEST_F(TestEventSend, DifferentListenersOfSameTypeAreCalled) {
     StrictMock<MockFunction<void(const int &)>> intCallback1;
     StrictMock<MockFunction<void(const int &)>> intCallback2;
