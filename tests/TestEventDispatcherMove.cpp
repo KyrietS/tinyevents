@@ -6,7 +6,7 @@ using namespace tinyevents;
 using namespace testing;
 
 
-TEST(TestDispatcherCopyAndMove, VerifyDispatcherPredicates) {
+TEST(TestDispatcherMove, VerifyDispatcherPredicates) {
     // Check if Dispatcher is movable
     EXPECT_TRUE(std::is_move_constructible_v<Dispatcher>);
     EXPECT_TRUE(std::is_move_assignable_v<Dispatcher>);
@@ -16,7 +16,7 @@ TEST(TestDispatcherCopyAndMove, VerifyDispatcherPredicates) {
     EXPECT_FALSE(std::is_copy_assignable_v<Dispatcher>);
 }
 
-TEST(TestDispatcherCopyAndMove, WhenDispatcherIsMovedThenListenersAreMoved) {
+TEST(TestDispatcherMove, WhenDispatcherIsMovedThenListenersAreMoved) {
     Dispatcher movedDispatcher;
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
@@ -31,7 +31,7 @@ TEST(TestDispatcherCopyAndMove, WhenDispatcherIsMovedThenListenersAreMoved) {
     dispatcher.send(111);
 }
 
-TEST(TestDispatcherCopyAndMove, WhenDispatcherIsMovedThenQueuedMessagesAreMoved) {
+TEST(TestDispatcherMove, WhenDispatcherIsMovedThenQueuedMessagesAreMoved) {
     Dispatcher movedDispatcher;
     StrictMock<MockFunction<void(const int &)>> intCallback;
 

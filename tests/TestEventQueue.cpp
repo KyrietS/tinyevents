@@ -5,11 +5,11 @@
 using namespace tinyevents;
 using namespace testing;
 
-struct DispatcherQueueTest : public testing::Test {
+struct TestEventQueue : public testing::Test {
     Dispatcher dispatcher{};
 };
 
-TEST_F(DispatcherQueueTest, MessagesQueuedAndThenIgnoredWhenNoListeners) {
+TEST_F(TestEventQueue, MessagesQueuedAndThenIgnoredWhenNoListeners) {
     dispatcher.queue(123);
     dispatcher.queue(123.0f);
     dispatcher.queue("abc");
@@ -20,14 +20,14 @@ TEST_F(DispatcherQueueTest, MessagesQueuedAndThenIgnoredWhenNoListeners) {
     dispatcher.process();
 }
 
-TEST_F(DispatcherQueueTest, ShouldNotSendAnythingWhenNoMessagesQueued) {
+TEST_F(TestEventQueue, ShouldNotSendAnythingWhenNoMessagesQueued) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
     dispatcher.listen(intCallback.AsStdFunction());
     dispatcher.process();
 }
 
-TEST_F(DispatcherQueueTest, ShouldSendMessageQueued) {
+TEST_F(TestEventQueue, ShouldSendMessageQueued) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
     dispatcher.listen(intCallback.AsStdFunction());
@@ -39,7 +39,7 @@ TEST_F(DispatcherQueueTest, ShouldSendMessageQueued) {
     dispatcher.process();
 }
 
-TEST_F(DispatcherQueueTest, ShouldSendQueuedMessagesOfDifferentTypes) {
+TEST_F(TestEventQueue, ShouldSendQueuedMessagesOfDifferentTypes) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
     dispatcher.listen(intCallback.AsStdFunction());
@@ -51,7 +51,7 @@ TEST_F(DispatcherQueueTest, ShouldSendQueuedMessagesOfDifferentTypes) {
     dispatcher.process();
 }
 
-TEST_F(DispatcherQueueTest, MessageQeuedBeforeListenerAddedAndThenSent) {
+TEST_F(TestEventQueue, MessageQeuedBeforeListenerAddedAndThenSent) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
 
     dispatcher.queue(123);

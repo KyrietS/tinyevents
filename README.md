@@ -69,9 +69,29 @@ Register a listener for a specific event type. The listener will be called when 
 
 ```cpp
 template<typename Event>
-void listen(const std::function<void(const Event&)>& listener)
+ListenerHandle listen(const std::function<void(const Event&)>& listener)
 ```
 * listener - A callable object that will be called when an event of type `Event` is dispatched. The object must be copyable.
+
+Returns a handle that can be used to remove the listener.
+
+### Removing Listeners
+
+Remove a listener that was previously registered using `listen()`.
+
+```cpp
+void remove(const ListenerHandle& handle)
+```
+* handle - The handle of the listener to remove.
+
+### Checking Listeners
+
+Check if a listener is registered in the dispatcher.
+
+```cpp
+bool hasListener(const ListenerHandle& handle)
+```
+* handle - The handle of the listener to check.
 
 ### Dispatching Events
 

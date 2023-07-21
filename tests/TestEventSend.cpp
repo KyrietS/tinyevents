@@ -5,11 +5,11 @@
 using namespace tinyevents;
 using namespace testing;
 
-struct DispatcherTest : public Test {
+struct TestEventSend : public Test {
     Dispatcher dispatcher{};
 };
 
-TEST_F(DispatcherTest, MessagesIgnoredWhenNoListeners) {
+TEST_F(TestEventSend, MessagesIgnoredWhenNoListeners) {
     dispatcher.send(123);
     dispatcher.send(123.0f);
     dispatcher.send("abc");
@@ -18,7 +18,7 @@ TEST_F(DispatcherTest, MessagesIgnoredWhenNoListeners) {
     dispatcher.send(CustomType{});
 }
 
-TEST_F(DispatcherTest, MessagesAreDispatchedToSingleListeners) {
+TEST_F(TestEventSend, MessagesAreDispatchedToSingleListeners) {
     dispatcher.listen<int>([](const auto &msg) {
         EXPECT_EQ(msg, 123);
     });
@@ -31,7 +31,7 @@ TEST_F(DispatcherTest, MessagesAreDispatchedToSingleListeners) {
     dispatcher.send(n);
 }
 
-TEST_F(DispatcherTest, TheSameListenerCanBeAddedMultipleTimes) {
+TEST_F(TestEventSend, TheSameListenerCanBeAddedMultipleTimes) {
     MockFunction<void(const int &)> intCallback;
     EXPECT_CALL(intCallback, Call(123)).Times(2);
 
@@ -41,7 +41,7 @@ TEST_F(DispatcherTest, TheSameListenerCanBeAddedMultipleTimes) {
     dispatcher.send(123);
 }
 
-TEST_F(DispatcherTest, DifferentListenersOfSameTypeAreCalled) {
+TEST_F(TestEventSend, DifferentListenersOfSameTypeAreCalled) {
     StrictMock<MockFunction<void(const int &)>> intCallback1;
     StrictMock<MockFunction<void(const int &)>> intCallback2;
     EXPECT_CALL(intCallback1, Call(123)).Times(1);
@@ -53,7 +53,7 @@ TEST_F(DispatcherTest, DifferentListenersOfSameTypeAreCalled) {
     dispatcher.send(123);
 }
 
-TEST_F(DispatcherTest, DifferentListenersOfDifferentTypesAreCalled) {
+TEST_F(TestEventSend, DifferentListenersOfDifferentTypesAreCalled) {
     StrictMock<MockFunction<void(const int &)>> intCallback;
     StrictMock<MockFunction<void(const float &)>> floatCallback;
 
@@ -69,7 +69,7 @@ TEST_F(DispatcherTest, DifferentListenersOfDifferentTypesAreCalled) {
 }
 
 
-TEST_F(DispatcherTest, ListenerWithCustomEmptyType) {
+TEST_F(TestEventSend, ListenerWithCustomEmptyType) {
     struct EmptyType { };
 
     StrictMock<MockFunction<void(const EmptyType &)>> emptyTypeCallback;
@@ -82,7 +82,7 @@ TEST_F(DispatcherTest, ListenerWithCustomEmptyType) {
     dispatcher.send(EmptyType{});
 }
 
-TEST_F(DispatcherTest, ListenerWithCustomType) {
+TEST_F(TestEventSend, ListenerWithCustomType) {
     struct CustomType {
         int n;
     };
@@ -99,7 +99,7 @@ TEST_F(DispatcherTest, ListenerWithCustomType) {
     dispatcher.send(333);
 }
 
-TEST_F(DispatcherTest, ParentMessageTypeListenerShouldNotBeCalledForChildMessage) {
+TEST_F(TestEventSend, ParentMessageTypeListenerShouldNotBeCalledForChildMessage) {
     struct Parent { };
     struct Child : Parent { };
 
