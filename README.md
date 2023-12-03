@@ -1,8 +1,8 @@
 # TinyEvents - A Simple Event-Dispatcher System for C++
 
-[![Mizeria release](https://img.shields.io/github/v/release/KyrietS/tinyevents?include_prereleases&sort=semver)](https://github.com/KyrietS/tinyevents/releases)
-[![Lincense](https://img.shields.io/github/license/KyrietS/tinyevents)](LICENSE)
+<!--[![Mizeria release](https://img.shields.io/github/v/release/KyrietS/tinyevents?include_prereleases&sort=semver)](https://github.com/KyrietS/tinyevents/releases)-->
 [![Tests](https://github.com/KyrietS/tinyevents/actions/workflows/tests.yml/badge.svg)](https://github.com/KyrietS/tinyevents/actions/workflows/tests.yml)
+[![Lincense](https://img.shields.io/github/license/KyrietS/tinyevents)](LICENSE)
 
 *TinyEvents* is a simple header-only library for C++ that provides a basic, yet powerfull, event-dispatcher system. It is designed to be easy to use and to have minimal dependencies. It is written in C++17 and has no dependencies other than the standard library.
 
@@ -12,12 +12,13 @@ In *TinyEvents* any type can be used as an event. The events are dispatched to l
 
 ```cpp
 #include <tinyevents/tinyevents.hpp>
+#include <iostream>
 
 struct MyEvent {
     int value;
 };
 
-int maint() {
+int main() {
     tinyevents::Dispatcher dispatcher;
 
     dispatcher.listen<MyEvent>([](const auto& event) {
@@ -26,7 +27,7 @@ int maint() {
 
     dispatcher.queue(MyEvent{77});
     dispatcher.dispatch(MyEvent{42});  // Prints "Received MyEvent: 42"
-    dispatcher.process();          // Prints "Received MyEvent: 77"
+    dispatcher.process();              // Prints "Received MyEvent: 77"
 
     dispatcher.dispatch(123);          // No listener for this event, so nothing happens
 
