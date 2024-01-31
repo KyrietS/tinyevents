@@ -148,15 +148,13 @@ Tests are written using Google Test. The library is fetched automatically by CMa
 
 In order to run the tests with CMake, you can use the following commands:
 ```
-cd tests
-cmake -B build
-cd build
-cmake --build .
-ctest
+cmake -S tests -B tests/build
+cmake --build tests/build
+ctest --test-dir tests/build
 ```
 
 ## License
-Copyright © 2023 KyrietS\
+Copyright © 2023-2024 KyrietS\
 Use of this software is granted under the terms of the MIT License.
 
 See the [LICENSE](LICENSE) file for more details.
