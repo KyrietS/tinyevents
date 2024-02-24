@@ -1,12 +1,12 @@
 # TinyEvents - A Simple Event-Dispatcher System for C++
 
-<!--[![Mizeria release](https://img.shields.io/github/v/release/KyrietS/tinyevents?include_prereleases&sort=semver)](https://github.com/KyrietS/tinyevents/releases)-->
+<!--[![release](https://img.shields.io/github/v/release/KyrietS/tinyevents?include_prereleases&sort=semver)](https://github.com/KyrietS/tinyevents/releases)-->
 [![Tests](https://github.com/KyrietS/tinyevents/actions/workflows/tests.yml/badge.svg)](https://github.com/KyrietS/tinyevents/actions/workflows/tests.yml)
 [![Lincense](https://img.shields.io/github/license/KyrietS/tinyevents)](LICENSE)
 
 *TinyEvents* is a simple header-only library for C++ that provides a basic, yet powerfull, event-dispatcher system. It is designed to be easy to use and to have minimal dependencies. It is written in C++17 and has no dependencies other than the standard library.
 
-In *TinyEvents* any type can be used as an event. The events are dispatched to listeners that are registered for a specific event type. Asynchronous (deferred) dispatching using a queue is also supported.
+In *TinyEvents* any type can be used as an event. The events are dispatched to listeners that are registered for a specific event type. Asynchronous (deferred) dispatching using a queue is also supported. With the `tinyevents::Token` helper class you can get RAII-style automatic listener removal.
 
 ## Basic Usage
 
@@ -21,15 +21,22 @@ struct MyEvent {
 int main() {
     tinyevents::Dispatcher dispatcher;
 
-    dispatcher.listen<MyEvent>([](const auto& event) {
+    // Register a listener for MyEvent
+    auto handle = dispatcher.listen<MyEvent>([](const auto& event) {
         std::cout << "Received MyEvent: " << event.value << std::endl;
     });
 
-    dispatcher.queue(MyEvent{77});
-    dispatcher.dispatch(MyEvent{42});  // Prints "Received MyEvent: 42"
-    dispatcher.process();              // Prints "Received MyEvent: 77"
+    // Dispatch an event
+    dispatcher.dispatch(MyEvent{11});  // Prints "Received MyEvent: 11"
 
-    dispatcher.dispatch(123);          // No listener for this event, so nothing happens
+    // Queue events
+    dispatcher.queue(MyEvent{22});
+    dispatcher.queue(MyEvent{33});
+    dispatcher.process();              // Prints "Received MyEvent: 22"
+                                       //        "Received MyEvent: 33"
+
+    dispatcher.remove(handle);         // Remove the listener
+    dispatcher.dispatch(MyEvent{44});  // No listener, so nothing happens
 
     return 0;
 }
@@ -70,7 +77,7 @@ Register a listener for a specific event type. The listener will be called when 
 
 ```cpp
 template<typename Event>
-ListenerHandle listen(const std::function<void(const Event&)>& listener)
+std::uint64_t listen(const std::function<void(const Event&)>& listener)
 ```
 * listener - A callable object that will be called when an event of type `Event` is dispatched. The object must be copyable.
 
@@ -82,7 +89,7 @@ Same as `listen()`, but the listener will be removed after it is called once.
 
 ```cpp
 template<typename Event>
-ListenerHandle listenOnce(const std::function<void(const Event&)>& listener)
+std::uint64_t listenOnce(const std::function<void(const Event&)>& listener)
 ```
 * listener - A callable object that will be called when an event of type `Event` is dispatched. The object must be copyable.
 
@@ -93,7 +100,7 @@ Returns a handle that can be used to remove the listener.
 Remove a listener that was previously registered using `listen()`.
 
 ```cpp
-void remove(const ListenerHandle& handle)
+void remove(std::uint64_t handle)
 ```
 * handle - The handle of the listener to remove.
 
@@ -102,7 +109,7 @@ void remove(const ListenerHandle& handle)
 Check if a listener is registered in the dispatcher.
 
 ```cpp
-bool hasListener(const ListenerHandle& handle)
+bool hasListener(std::uint64_t handle)
 ```
 * handle - The handle of the listener to check.
 
@@ -141,6 +148,19 @@ void process()
 * You can safely call `dispatch()` and `process()` from inside a listener callback. The new event will be dispatched immediately during the current dispatching process.
 * You can safely call `remove(handle)` for a handle that was already removed. Nothing will happen.
 * Handles are never reused by the same dispatcher.
+
+## Token - helper RAII class
+```cpp
+
+tinevents::Dispatcher dispatcher;
+std::uint64_t handle = dispatcher.listen<MyEvent>(myCallback);
+
+// RAII token
+tinyevents::Token token(dispatcher, handle); // When this token goes out of scope the listener
+                                             // will be automatically removed from dispatcher.
+```
+
+Make sure that the dispatcher is still alive when the token is destroyed.
 
 ## Tests
 

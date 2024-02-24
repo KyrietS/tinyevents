@@ -11,6 +11,9 @@ struct TestEventListen : public Test {
 
 
 TEST_F(TestEventListen, VerifyListenerHandlePredicates) {
+    // Get the type of value returned by listen
+    using ListenerHandle = decltype(std::declval<Dispatcher>().listen<int>(nullptr));
+
     // Check if Handle is movable
     EXPECT_TRUE(std::is_move_constructible_v<ListenerHandle>);
     EXPECT_TRUE(std::is_move_assignable_v<ListenerHandle>);
@@ -29,7 +32,7 @@ TEST_F(TestEventListen, VerifyListenerHandlePredicates) {
 TEST_F(TestEventListen, AddingNewListenerShouldReturnHandle) {
     StrictMock<MockFunction<void(const int &)>> callback;
 
-    EXPECT_THAT(dispatcher.listen(callback.AsStdFunction()), A<ListenerHandle>());
+    EXPECT_THAT(dispatcher.listen(callback.AsStdFunction()), A<std::uint64_t>());
 }
 
 TEST_F(TestEventListen, ReturnedHandleShouldBeValid) {
@@ -46,7 +49,6 @@ TEST_F(TestEventListen, ReturnedHandlesShouldBeDifferent) {
     const auto handle2 = dispatcher.listen(callback.AsStdFunction());
 
     EXPECT_NE(handle1, handle2);
-    EXPECT_NE(handle1.value(), handle2.value());
 }
 
 TEST_F(TestEventListen, ReturnedHandleShouldBeInvalidAfterRemoval) {
@@ -92,7 +94,7 @@ TEST_F(TestEventListen, ListenersCanAddAnotherListener) {
 TEST_F(TestEventListen, ListenerCanRemoveItself) {
     StrictMock<MockFunction<void(const int &)>> callback;
 
-    ListenerHandle handleToSelf{0};
+    std::uint64_t handleToSelf{0};
 
     handleToSelf = dispatcher.listen<int>([&](const int &value) {
         callback.Call(value);
@@ -110,7 +112,7 @@ TEST_F(TestEventListen, ListenerCanRemoveAnotherListener) {
     StrictMock<MockFunction<void(const int &)>> callback1;
     StrictMock<MockFunction<void(const int &)>> callback2;
 
-    ListenerHandle handle2{0};
+    std::uint64_t handle2{0};
 
     dispatcher.listen<int>([&](const int &value) {
         callback1.Call(value);
@@ -159,7 +161,7 @@ TEST_F(TestEventListen, ListenOnceCanBeCalledFromInsideAnotherListenOnceCallback
 TEST_F(TestEventListen, ListenerOnceShouldBeRemovedAfterCallEvenIfItRemovesItself) {
     StrictMock<MockFunction<void(const int &)>> callback;
 
-    ListenerHandle handleToSelf{0};
+    std::uint64_t handleToSelf{0};
 
     handleToSelf = dispatcher.listenOnce<int>([&](const int &value) {
         callback.Call(value);
@@ -185,4 +187,23 @@ TEST_F(TestEventListen, ListenerOnceShouldBeCalledOnceEvenIfMessageIsSentFromLis
     dispatcher.dispatch(111);
     EXPECT_FALSE(dispatcher.hasListener(handle));
     dispatcher.dispatch(333);
+}
+
+TEST_F(TestEventListen, TestRaiiApproachToListenerRemoval) {
+    // Prepare a unique_ptr type that will provide RAII behavior
+    auto deleter = [this](const std::uint64_t* raiiHandle) {
+        dispatcher.remove(*raiiHandle);
+        delete raiiHandle;
+    };
+    using RaiiHandleType = std::unique_ptr<std::uint64_t, decltype(deleter)>;
+
+    StrictMock<MockFunction<void(const int&)>> callback;
+    const auto handle = dispatcher.listen<int>(callback.AsStdFunction());
+
+    // Inner scope to test RAII behavior
+    {
+        EXPECT_TRUE(dispatcher.hasListener(handle));
+        RaiiHandleType raiiHandle(new std::uint64_t(handle), deleter);
+    }
+    EXPECT_FALSE(dispatcher.hasListener(handle));
 }

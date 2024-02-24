@@ -9,27 +9,10 @@
 
 namespace tinyevents
 {
-    class ListenerHandle {
-    public:
-        explicit ListenerHandle(std::uint64_t id) : id(id) {}
-
-        [[nodiscard]] std::uint64_t value() const { return id; }
-
-        friend constexpr bool operator== (const ListenerHandle& lhs, const ListenerHandle& rhs) {
-            return lhs.id == rhs.id;
-        }
-        friend constexpr bool operator!= (const ListenerHandle& lhs, const ListenerHandle& rhs) {
-            return lhs.id != rhs.id;
-        }
-        friend constexpr bool operator< (const ListenerHandle& lhs, const ListenerHandle& rhs) {
-            return lhs.id < rhs.id;
-        }
-
-    private:
-        std::uint64_t id;
-    };
+    class Token;
 
     class Dispatcher {
+        using ListenerHandle = std::uint64_t;
         using Listeners = std::map<ListenerHandle, std::function<void(const void *)>>;
     public:
         Dispatcher() = default;
@@ -38,7 +21,7 @@ namespace tinyevents
         Dispatcher &operator=(Dispatcher &&) noexcept = default;
 
         template<typename T>
-        ListenerHandle listen(const std::function<void(const T &)> &listener) {
+        std::uint64_t listen(const std::function<void(const T &)> &listener) {
             auto& listeners = listenersByType[std::type_index(typeid(T))];
             const auto listenerHandle = ListenerHandle{nextListenerId++};
 
@@ -50,7 +33,7 @@ namespace tinyevents
         }
 
         template<typename T>
-        ListenerHandle listenOnce(const std::function<void(const T &)> &listener) {
+        std::uint64_t listenOnce(const std::function<void(const T &)> &listener) {
             const auto listenerId = nextListenerId;
             return listen<T>([this, listenerId, listener](const T &msg) {
                 ListenerHandle handle{listenerId};
@@ -101,7 +84,7 @@ namespace tinyevents
             queuedDispatches.clear();
         }
 
-        void remove(const ListenerHandle &handle) {
+        void remove(const std::uint64_t handle) {
             if (isScheduledForRemoval(handle)) {
                 return;
             }
@@ -111,7 +94,7 @@ namespace tinyevents
             }
         }
 
-        [[nodiscard]] bool hasListener(const ListenerHandle& handle) const {
+        [[nodiscard]] bool hasListener(std::uint64_t handle) const {
             if (isScheduledForRemoval(handle)) {
                 return false;
             }
@@ -122,7 +105,7 @@ namespace tinyevents
         }
 
     private:
-        bool isScheduledForRemoval(const ListenerHandle& handle) const {
+        [[nodiscard]] bool isScheduledForRemoval(const std::uint64_t handle) const {
             return listenersScheduledForRemoval.find(handle) != listenersScheduledForRemoval.end();
         }
 
@@ -131,5 +114,54 @@ namespace tinyevents
         std::set<ListenerHandle> listenersScheduledForRemoval;
 
         std::uint64_t nextListenerId = 0;
+    };
+
+    // RAII wrapper for listener handle.
+    class Token {
+    public:
+        Token(Dispatcher& dispatcher, const std::uint64_t handle)
+            : dispatcher(dispatcher), _handle(handle), holdsResource(true) {}
+        ~Token() {
+            if (holdsResource) {
+                dispatcher.get().remove(_handle);
+            }
+        }
+
+        // Disable copy operations
+        Token(const Token&) = delete;
+        Token& operator=(const Token&) = delete;
+
+        // Enable move operations
+        Token(Token&& other) noexcept
+            : dispatcher(other.dispatcher), _handle(other._handle), holdsResource(other.holdsResource) {
+            other.holdsResource = false;
+        }
+
+        Token& operator=(Token&& other) noexcept {
+            if (this != &other) {
+                if (this->holdsResource) {
+                    dispatcher.get().remove(_handle);
+                }
+                dispatcher = other.dispatcher;
+                _handle = other._handle;
+                holdsResource = other.holdsResource;
+                other.holdsResource = false;
+            }
+            return *this;
+        }
+
+        [[nodiscard]] std::uint64_t handle() const {
+            return _handle;
+        }
+
+        void remove() {
+            dispatcher.get().remove(_handle);
+            holdsResource = false;
+        }
+
+    private:
+        std::reference_wrapper<Dispatcher> dispatcher;
+        std::uint64_t _handle;
+        bool holdsResource;
     };
 }// namespace tinyevents

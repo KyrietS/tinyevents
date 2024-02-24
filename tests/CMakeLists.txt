@@ -19,6 +19,7 @@ add_executable(${TEST_TARGET}
         TestEventQueue.cpp
         TestEventDispatcherMove.cpp
         TestEventListen.cpp
+        TestToken.cpp
 )
 
 # tinyevents
