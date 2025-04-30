@@ -79,7 +79,7 @@ namespace tinyevents
 
         void process() {
             while (!queuedDispatches.empty()) {
-                std::function<void(Dispatcher&)> queuedDispatch = queuedDispatches.front();
+                std::function<void(Dispatcher&)> queuedDispatch = std::move(queuedDispatches.front());
                 queuedDispatches.pop();
                 queuedDispatch(*this);
             }
