@@ -1,7 +1,7 @@
 #pragma once
 
 #include <functional>
-#include <list>
+#include <queue>
 #include <set>
 #include <map>
 #include <typeindex>
@@ -72,16 +72,17 @@ namespace tinyevents
 
         template<typename T>
         void queue(const T &msg) {
-            queuedDispatches.push_back([msg](Dispatcher& dispatcher) {
+            queuedDispatches.push([msg](Dispatcher& dispatcher) {
                 dispatcher.dispatch(msg);
             });
         }
 
         void process() {
-            for (auto &queuedDispatch: queuedDispatches) {
+            while (!queuedDispatches.empty()) {
+                std::function<void(Dispatcher&)> queuedDispatch = queuedDispatches.front();
+                queuedDispatches.pop();
                 queuedDispatch(*this);
             }
-            queuedDispatches.clear();
         }
 
         void remove(const std::uint64_t handle) {
@@ -110,7 +111,7 @@ namespace tinyevents
         }
 
         std::map<std::type_index, Listeners> listenersByType;
-        std::list<std::function<void(Dispatcher&)>> queuedDispatches;
+        std::queue<std::function<void(Dispatcher&)>> queuedDispatches;
         std::set<ListenerHandle> listenersScheduledForRemoval;
 
         std::uint64_t nextListenerId = 0;
