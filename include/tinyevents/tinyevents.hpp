@@ -71,9 +71,9 @@ namespace tinyevents
         }
 
         template<typename T>
-        void queue(const T &msg) {
-            queuedDispatches.push([msg](Dispatcher& dispatcher) {
-                dispatcher.dispatch(msg);
+        void queue(T&& msg) {
+            queuedDispatches.push([m = std::forward<T>(msg)](Dispatcher& dispatcher) {
+                dispatcher.dispatch(m);
             });
         }
 
