@@ -85,3 +85,20 @@ TEST_F(TestEventQueue, MessageQueuedDataGoesOutOfScope) {
     EXPECT_CALL(intCallback, Call(456)).Times(1);
     dispatcher.process();
 }
+
+TEST_F(TestEventQueue, MessageQueueInsideQueuedListener) {
+    StrictMock<MockFunction<void(const int &)>> intCallback;
+
+    dispatcher.listen<int>([&](const int &msg) {
+        if (msg == 123) {
+            dispatcher.queue(456);
+        }
+    });
+
+    dispatcher.listen(intCallback.AsStdFunction());
+
+    EXPECT_CALL(intCallback, Call(123)).Times(1);
+    EXPECT_CALL(intCallback, Call(456)).Times(1);
+    dispatcher.queue(123);
+    dispatcher.process();
+}
