@@ -14,8 +14,13 @@ TEST_F(TestEventQueue, MessagesQueuedAndThenIgnoredWhenNoListeners) {
     dispatcher.queue(123.0f);
     dispatcher.queue("abc");
 
+    // Dispatch by rvalue
     struct CustomType { };
     dispatcher.queue(CustomType{});
+
+    // Dispatch by lvalue
+    CustomType customType;
+    dispatcher.queue(customType);
 
     dispatcher.process();
 }
@@ -58,5 +63,42 @@ TEST_F(TestEventQueue, MessageQeuedBeforeListenerAddedAndThenSent) {
     dispatcher.listen(intCallback.AsStdFunction());
 
     EXPECT_CALL(intCallback, Call(123)).Times(1);
+    dispatcher.process();
+}
+
+TEST_F(TestEventQueue, MessageQueuedDataGoesOutOfScope) {
+    StrictMock<MockFunction<void(const int &)>> intCallback;
+
+    {
+        int i = 123;
+        dispatcher.queue(i);
+    }
+
+    {
+        int i = 456;
+        dispatcher.queue(i);
+    }
+
+    dispatcher.listen(intCallback.AsStdFunction());
+
+    EXPECT_CALL(intCallback, Call(123)).Times(1);
+    EXPECT_CALL(intCallback, Call(456)).Times(1);
+    dispatcher.process();
+}
+
+TEST_F(TestEventQueue, MessageQueueInsideQueuedListener) {
+    StrictMock<MockFunction<void(const int &)>> intCallback;
+
+    dispatcher.listen<int>([&](const int &msg) {
+        if (msg == 123) {
+            dispatcher.queue(456);
+        }
+    });
+
+    dispatcher.listen(intCallback.AsStdFunction());
+
+    EXPECT_CALL(intCallback, Call(123)).Times(1);
+    EXPECT_CALL(intCallback, Call(456)).Times(1);
+    dispatcher.queue(123);
     dispatcher.process();
 }
